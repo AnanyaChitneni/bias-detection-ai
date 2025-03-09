@@ -1,35 +1,51 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from textblob import TextBlob
+from webdriver_manager.chrome import ChromeDriverManager
 import time
+import webbrowser
+import os
 
-# Setup Selenium WebDriver (Make sure to update the path to chromedriver)
-service = Service("/path/to/chromedriver")  # Change this to the correct path
+# Automatically installs & sets up ChromeDriver
+service = Service(ChromeDriverManager().install())
 options = webdriver.ChromeOptions()
-options.add_argument("--headless")  # Run in headless mode (no browser window)
 driver = webdriver.Chrome(service=service, options=options)
 
-# Function to extract text from a webpage
-def get_webpage_text(url):
-    driver.get(url)
-    time.sleep(3)  # Wait for the page to load
-    return driver.find_element(By.TAG_NAME, "body").text
+# Open website
+url = "https://example.com"  # Change this to any site
+driver.get(url)
 
-# Function to analyze bias using TextBlob
-def analyze_bias(text):
-    analysis = TextBlob(text)
-    subjectivity = analysis.sentiment.subjectivity  # High subjectivity indicates potential bias
-    return subjectivity
+# Extract text
+time.sleep(3)  # Wait for page load
+page_text = driver.find_element(By.TAG_NAME, "body").text
 
-# Test with a news website
-url = "https://www.bbc.com/news"
-print(f"Extracting text from: {url}")
-text = get_webpage_text(url)
-bias_score = analyze_bias(text)
+# Generate output HTML
+html_content = f"""
+<html>
+<head>
+    <title>Web Scraping Output</title>
+    <style>
+        body {{ font-family: Arial; margin: 40px; background: #f4f4f4; }}
+        .container {{ max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 10px; }}
+        h1 {{ color: #333; }}
+        pre {{ background: #eee; padding: 15px; border-radius: 5px; white-space: pre-wrap; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Web Scraping Result</h1>
+        <h3>Extracted Text:</h3>
+        <pre>{page_text}</pre>
+    </div>
+</body>
+</html>
+"""
 
-print(f"Bias Score (0 = Objective, 1 = Highly Biased): {bias_score}")
+# Save & open in browser
+output_file = "output.html"
+with open(output_file, "w", encoding="utf-8") as file:
+    file.write(html_content)
+webbrowser.open("file://" + os.path.abspath(output_file))
 
-# Close the browser
+# Close driver
 driver.quit()
